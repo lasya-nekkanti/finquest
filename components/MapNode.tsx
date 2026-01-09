@@ -11,7 +11,7 @@ export default function MapNode({ label, status, href }: MapNodeProps) {
     current:
       "bg-yellow-400 shadow-[0_6px_0_#ca8a04] animate-bounce",
     locked:
-      "bg-gray-600 opacity-50 cursor-not-allowed",
+      "bg-gray-600 opacity-50 cursor-pointer hover:opacity-70",
   };
 
   const node = (
@@ -28,5 +28,6 @@ export default function MapNode({ label, status, href }: MapNodeProps) {
     </div>
   );
 
-  return href && status !== "locked" ? <a href={href}>{node}</a> : node;
+  // Allow locked levels to be clickable for exploration (only boss fights remain locked)
+  return href ? <a href={href}>{node}</a> : node;
 }
