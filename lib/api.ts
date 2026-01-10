@@ -72,10 +72,11 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 // ---------------- Add XP ----------------
-export async function addXP(xp: number): Promise<{ xp: number }> {
-  const response = await fetch(`${API_BASE_URL}/api/addxp/${xp}`, {
+export async function addXP(userId: string, xp: number): Promise<{ xp: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/addxp`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, xp }),
   });
 
   if (!response.ok) {

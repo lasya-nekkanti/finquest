@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify
 from supabase import Client, create_client
 from flask_cors import CORS
 
-
+SUPABASE_URL="https://qrconluweljaofvfdxqm.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyY29ubHV3ZWxqYW9mdmZkeHFtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzk4NzM4NCwiZXhwIjoyMDgzNTYzMzg0fQ.k93smL9588CrYtJCsxaxke6rJbbb8q3pUZswPyjLEYg"
+ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyY29ubHV3ZWxqYW9mdmZkeHFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5ODczODQsImV4cCI6MjA4MzU2MzM4NH0.5MWw72E5OtQQ2eWYJaiunXFrMD4oJ3KhtwlQz4GyX2E"
 app = Flask(__name__)
 CORS(app)
 supabase: Client = create_client(SUPABASE_URL, ANON_KEY)
@@ -89,13 +91,22 @@ def profile():
         return jsonify({"error": str(e)}), 400
 
 # ---------------- Add XP ----------------
-@app.route("/api/addxp/<int:xp>", methods=["POST"])
-def add_xp(xp):
-    user_id = supabase.auth.get_user()
+@app.route("/api/addxp", methods=["POST"])
+def add_xp():
+    data = request.json
+    user_id = data.get("user_id")
+    xp_delta = data.get("xp", 0)
+    
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    
     try:
+        # Get current XP
         resp = supabase.table("profiles").select("xp").eq("id", user_id).single().execute()
-        new_xp = resp.data["xp"] + xp
+        current_xp = resp.data["xp"] if resp.data else 0
+        new_xp = max(0, current_xp + xp_delta)  # Ensure XP doesn't go negative
 
+        # Update XP in database
         supabase.table("profiles").update({
             "xp": new_xp
         }).eq("id", user_id).execute()

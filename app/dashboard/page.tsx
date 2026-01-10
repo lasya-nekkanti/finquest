@@ -49,7 +49,7 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       // Step 1: Check localStorage for user_id
       const storedUser = localStorage.getItem("finstinct-user");
-      
+
       if (!storedUser) {
         router.replace("/");
         return;
@@ -57,7 +57,7 @@ export default function Dashboard() {
 
       try {
         const parsedUser = JSON.parse(storedUser);
-        
+
         // Step 2: Verify user_id exists
         if (!parsedUser.user_id) {
           console.error("No user_id found in localStorage");
@@ -125,10 +125,81 @@ export default function Dashboard() {
       }
     };
 
+    // Initial fetch
     fetchDashboardData();
+
+    // Set up polling to refresh leaderboard every 10 seconds
+    const intervalId = setInterval(() => {
+      // Only refresh leaderboard, not the entire dashboard
+      const refreshLeaderboard = async () => {
+        try {
+          const leaderboardRes = await fetch(`${API_BASE_URL}/api/leaderboard`);
+          if (!leaderboardRes.ok) return;
+
+          const leaderboardData = await leaderboardRes.json();
+          const formattedLeaderboard: LeaderboardEntry[] = leaderboardData.map(
+            (entry: any, index: number) => ({
+              name: entry.username,
+              xp: entry.xp,
+              leaderboard_position: index + 1,
+            })
+          );
+
+          if (isMounted) {
+            setLeaderboard(formattedLeaderboard);
+          }
+        } catch (err) {
+          console.error("Failed to refresh leaderboard:", err);
+        }
+      };
+
+      refreshLeaderboard();
+    }, 10000); // Refresh every 10 seconds
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, []); // Empty array - runs once on mount
+
+  // Separate effect to refresh user XP periodically
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshUserXP = async () => {
+      const storedUser = localStorage.getItem("finstinct-user");
+      if (!storedUser) return;
+
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (!parsedUser.user_id) return;
+
+        const profileRes = await fetch(
+          `${API_BASE_URL}/api/profile?user_id=${parsedUser.user_id}`
+        );
+
+        if (!profileRes.ok) return;
+
+        const profileData = await profileRes.json();
+
+        if (isMounted) {
+          setUser(prev => prev ? {
+            ...prev,
+            xp: profileData.xp || 0,
+            level: profileData.level || 1,
+          } : null);
+        }
+      } catch (err) {
+        console.error("Failed to refresh user XP:", err);
+      }
+    };
+
+    // Refresh user XP every 5 seconds
+    const xpIntervalId = setInterval(refreshUserXP, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(xpIntervalId);
     };
   }, []); // Empty array - runs once on mount
 

@@ -45,7 +45,7 @@ export default function CircularProgress({
             fill="none"
             className="text-gray-800"
           />
-          {/* Progress circle */}
+          {/* Progress circle with glow effect */}
           <circle
             cx="64"
             cy="64"
@@ -56,13 +56,20 @@ export default function CircularProgress({
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
-            className="text-yellow-400 transition-all duration-300"
+            className="text-yellow-400 transition-all duration-700 ease-out drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]"
+            style={{
+              filter: progressPercentage > 0 ? 'drop-shadow(0 0 8px rgba(250, 204, 21, 0.6))' : 'none'
+            }}
           />
         </svg>
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-white">Level {currentLevel}</span>
-          <span className="text-xs text-gray-400">{Math.round(progressPercentage)}%</span>
+          <span className="text-2xl font-bold text-white transition-all duration-300">
+            Level {currentLevel}
+          </span>
+          <span className="text-xs text-gray-400 transition-all duration-300">
+            {Math.round(progressPercentage)}%
+          </span>
         </div>
       </div>
 
@@ -70,12 +77,15 @@ export default function CircularProgress({
       <div className="w-full space-y-2">
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-400">Progress</span>
-          <span className="text-yellow-400 font-bold">
+          <span className="text-yellow-400 font-bold transition-all duration-300">
             {xpProgress} / {xpNeeded} XP
           </span>
         </div>
-        <p className="text-xs text-gray-400 text-center">
-          {Math.round(xpNeeded - xpProgress)} XP until Level {currentLevel + 1}
+        <p className="text-xs text-gray-400 text-center transition-all duration-300">
+          {xpNeeded - xpProgress > 0
+            ? `${Math.round(xpNeeded - xpProgress)} XP until Level ${currentLevel + 1}`
+            : `Level ${currentLevel} Complete! 🎉`
+          }
         </p>
       </div>
     </div>

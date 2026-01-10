@@ -14,9 +14,9 @@ export default function Level3() {
     setLevelCompleted(completed);
   }, []);
 
-  // Handle XP changes - update local state (game display) and localStorage (total XP)
+  // Handle XP changes - update local state (game display), localStorage (total XP), and backend
   // Only award XP if level hasn't been completed before
-  const handleXpChange = useCallback((delta: number) => {
+  const handleXpChange = useCallback(async (delta: number) => {
     // Don't award XP if level is already completed
     if (levelCompleted) {
       return;
@@ -24,7 +24,7 @@ export default function Level3() {
 
     // Update game display XP (starts at 0, accumulates during session)
     setXp(prev => Math.max(0, prev + delta));
-    
+
     // Update total XP in localStorage
     const storedUser = localStorage.getItem('finstinct-user');
     if (storedUser) {
@@ -33,6 +33,13 @@ export default function Level3() {
       const newTotalXp = Math.max(0, currentTotalXp + delta);
       user.xp = newTotalXp;
       localStorage.setItem('finstinct-user', JSON.stringify(user));
+
+      // Sync to backend (fire and forget - don't block UI)
+      import('@/lib/api').then(({ addXP }) => {
+        addXP(user.user_id, delta).catch(err => {
+          console.error('Failed to sync XP to backend:', err);
+        });
+      });
     }
   }, [levelCompleted]);
 

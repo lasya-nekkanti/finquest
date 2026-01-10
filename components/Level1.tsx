@@ -14,10 +14,10 @@ export default function Level1() {
     setLevelCompleted(completed);
   }, []);
 
-  // Handle XP changes - update local state and localStorage
+  // Handle XP changes - update local state, localStorage, and backend
   // Only award XP if level hasn't been completed before
   // Memoized to prevent unnecessary re-renders in MoneyHangman
-  const handleXpChange = useCallback((delta: number) => {
+  const handleXpChange = useCallback(async (delta: number) => {
     // Don't award XP if level is already completed
     if (levelCompleted) {
       return;
@@ -25,15 +25,22 @@ export default function Level1() {
 
     setXp(prev => {
       const newXp = Math.max(0, prev + delta);
-      
+
       // Update XP in localStorage
       const storedUser = localStorage.getItem('finstinct-user');
       if (storedUser) {
         const user = JSON.parse(storedUser);
         user.xp = newXp;
         localStorage.setItem('finstinct-user', JSON.stringify(user));
+
+        // Sync to backend (fire and forget - don't block UI)
+        import('@/lib/api').then(({ addXP }) => {
+          addXP(user.user_id, delta).catch(err => {
+            console.error('Failed to sync XP to backend:', err);
+          });
+        });
       }
-      
+
       return newXp;
     });
   }, [levelCompleted]);
